@@ -12,7 +12,6 @@ require( 'dotenv' ).config();
  */
 const getInstallationAccessToken = require( './server/auth' );
 
-const repo = process.env.REPO;
 const app = express();
 const jsonParser = bodyParser.json();
 const wrapAsync = fn => ( req, res, next ) => fn( req, res, next ).catch( next );
@@ -27,32 +26,44 @@ app.post(
 	'/api/issues',
 	jsonParser,
 	wrapAsync( async ( request, response ) => {
-		const { author, title, assignees, body, labels } = request.body;
-		const owner = author || process.env.ISSUE_AUTHOR;
+		const { owner = process.env.ISSUE_AUTHOR, repo = process.env.REPO, issues } = request.body;
 		const token = await getInstallationAccessToken( owner, repo );
 		const github = Octokit( {
 			auth: token,
 			userAgent: 'First Five 0.0.7',
 		} );
-		const issue = Object.assign(
-			{},
-			{
-				owner,
-				repo,
+		const toSend = [];
+		let index = 0;
+		let loop = null;
+
+		loop = setInterval( async () => {
+			const { title, assignees, body, labels } = issues[ index ];
+			const issue = Object.assign(
+				{},
+				{
+					owner,
+					repo,
+					title,
+				},
+				assignees && { assignees },
+				body && { body },
+				labels && { labels }
+			);
+			const newIssue = await github.issues.create( issue );
+			toSend.push( {
 				title,
-			},
-			assignees && { assignees },
-			body && { body },
-			labels && { labels }
-		);
-		const newIssue = await github.issues.create( issue );
-		response.send( {
-			title,
-			url: newIssue.data.html_url,
-			assignees,
-			issueId: newIssue.data.id,
-			newIssue,
-		} );
+				url: newIssue.data.html_url,
+				assignees,
+				issueId: newIssue.data.id,
+				newIssue,
+			} );
+			if ( issues.length - 1 === index ) {
+				response.send( toSend );
+				clearInterval( loop );
+			} else {
+				index++;
+			}
+		}, 1500 );
 	} )
 );
 

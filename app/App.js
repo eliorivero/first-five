@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import React, { Fragment, useState, useEffect, useRef } from 'react';
+import React, { Fragment, useState } from 'react';
 import axios from 'axios';
 
 /**
@@ -24,27 +24,15 @@ export default function App() {
 	const [ newIssues, setNewIssues ] = useState( [] );
 	const issues = useField();
 	const author = useField();
-	const [ issueList, setIssueList ] = useState( [] );
+	const repo = useField();
 	const [ creating, setCreating ] = useState( false );
 	const [ error, setError ] = useState( '' );
-	const newIssuesOk = useRef( newIssues );
-	newIssuesOk.current = newIssues;
 
-	useEffect( () => {
-		if ( 0 < issueList.length ) {
-			const timer = setTimeout( processIssue, 1500 );
-			return () => clearTimeout( timer );
-		} else if ( creating ) {
-			setCreating( false );
-		}
-	}, [ issueList ] );
-
-	const fetchData = issue => {
+	const parseIssue = issue => {
 		const parsedIssue = issue.split( '|' );
-		const requestBody = Object.assign(
+		return Object.assign(
 			{},
 			{
-				author: author.value,
 				title: parsedIssue[ 0 ],
 			},
 			parsedIssue[ 1 ] &&
@@ -53,26 +41,23 @@ export default function App() {
 			parsedIssue[ 3 ] &&
 				'' !== parsedIssue[ 3 ] && { labels: getFromCommaList( parsedIssue[ 3 ] ) }
 		);
-
-		return axios( {
-			method: 'post',
-			url: '/api/issues',
-			data: requestBody,
-		} );
 	};
 
-	const processIssue = async () => {
-		const result = await fetchData( issueList[ 0 ] );
+	const processIssues = async data => {
+		const result = await axios( {
+			method: 'post',
+			url: '/api/issues',
+			data,
+		} );
+
 		if ( result.data.error ) {
 			setError( result.data.error );
 			setNewIssues( [] );
-			setCreating( false );
 		} else {
-			setNewIssues( [ ...newIssuesOk.current, result.data ] );
-			const newIssueList = issueList.slice( 1 );
-			setIssueList( newIssueList );
-			issues.onChange( newIssueList.join( '\n' ) );
+			issues.onChange( '' );
+			setNewIssues( result.data );
 		}
+		setCreating( false );
 	};
 
 	const handleClick = e => {
@@ -80,8 +65,11 @@ export default function App() {
 		setError( '' );
 		setCreating( true );
 		setNewIssues( [] );
-		newIssuesOk.current = [];
-		setIssueList( issues.value.split( '\n' ).filter( x => '' !== x ) );
+		processIssues( {
+			owner: author.value,
+			repo: repo.value,
+			issues: issues.value.split( '\n' ).filter( x => '' !== x ).map( parseIssue ) 
+		} );
 	};
 
 	return (
@@ -98,9 +86,19 @@ export default function App() {
 						placeholder="Your GitHub username"
 					/>
 				</p>
+				<p>
+					<label htmlFor="author">Repository</label>
+					<input
+						{ ...repo }
+						id="repo"
+						type="text"
+						disabled={ creating }
+						placeholder="GitHub repository for issues"
+					/>
+				</p>
 				<label htmlFor="issues">Issues</label>
 				<div className="issue-creator__issues">
-					{ creating && <div className="issue-creator__block"></div> }
+					{ creating && <div className="issue-creator__block">Creating issues…</div> }
 					<textarea
 						{ ...issues }
 						id="issues"
