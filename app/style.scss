@@ -54,23 +54,15 @@ button {
 
 .issue-creator {
 
-	&__issues {
-		position: relative;
-	}
-
 	&__block {
-		position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1;
     background: rgba(255, 255, 255, 0.75);
-    width: 600px;
     height: 192px;
     border: 1px solid #ccc;
 		box-sizing: border-box;
 		display: flex;
     align-items: center;
-    justify-content: center;
+		justify-content: center;
+		margin-bottom: 2rem;
 	}
 
 	&__issues-help {
@@ -86,6 +78,7 @@ button {
 }
 
 .new-issues {
+	margin-bottom: 3rem;
 	ul {
 		list-style: none;
 		padding-left: 0;

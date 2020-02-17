@@ -25,6 +25,7 @@ export default function App() {
 	const issues = useField();
 	const author = useField();
 	const repo = useField();
+	const [ isAddMode, setIsAddMode ] = useState( true );
 	const [ creating, setCreating ] = useState( false );
 	const [ error, setError ] = useState( '' );
 
@@ -60,19 +61,28 @@ export default function App() {
 		setCreating( false );
 	};
 
-	const handleClick = e => {
-		e.preventDefault();
+	const switchMode = () => {
+		setIsAddMode( ! isAddMode );
+	};
+
+	const handleClick = () => {
 		setError( '' );
 		setCreating( true );
+		switchMode();
 		setNewIssues( [] );
 		processIssues( {
 			owner: author.value,
 			repo: repo.value,
-			issues: issues.value.split( '\n' ).filter( x => '' !== x ).map( parseIssue ) 
+			issues: issues.value
+				.split( '\n' )
+				.filter( x => '' !== x )
+				.map( parseIssue ),
 		} );
 	};
 
-	return (
+	const handleSwitchMode = () => switchMode();
+
+	return isAddMode ? (
 		<Fragment>
 			<h1>Create GitHub Issues</h1>
 			<form className="issue-creator">
@@ -98,7 +108,6 @@ export default function App() {
 				</p>
 				<label htmlFor="issues">Issues</label>
 				<div className="issue-creator__issues">
-					{ creating && <div className="issue-creator__block">Creating issues…</div> }
 					<textarea
 						{ ...issues }
 						id="issues"
@@ -122,9 +131,13 @@ export default function App() {
 				</p>
 				{ error && <p className="issue-creator__error">{ error }</p> }
 			</form>
+		</Fragment>
+	) : (
+		<Fragment>
+			<h2>New issues created</h2>
+			{ creating && <div className="issue-creator__block">Creating issues…</div> }
 			{ 0 < newIssues.length && (
 				<div className="new-issues">
-					<h2>New issues created</h2>
 					<ul>
 						{ newIssues.map( newIssue => (
 							<li key={ newIssue.issueId }>
@@ -134,6 +147,7 @@ export default function App() {
 					</ul>
 				</div>
 			) }
+			{ ! creating && <button onClick={ handleSwitchMode }>Add more</button> }
 		</Fragment>
 	);
 }
