@@ -23,7 +23,6 @@ const useField = () => {
 export default function App() {
 	const [ newIssues, setNewIssues ] = useState( [] );
 	const issues = useField();
-	const author = useField();
 	const repo = useField();
 	const [ isAddMode, setIsAddMode ] = useState( true );
 	const [ creating, setCreating ] = useState( false );
@@ -71,7 +70,6 @@ export default function App() {
 		switchMode();
 		setNewIssues( [] );
 		processIssues( {
-			owner: author.value,
 			repo: repo.value,
 			issues: issues.value
 				.split( '\n' )
@@ -87,23 +85,13 @@ export default function App() {
 			<h1>Create GitHub Issues</h1>
 			<form className="issue-creator">
 				<p>
-					<label htmlFor="author">Author</label>
-					<input
-						{ ...author }
-						id="author"
-						type="text"
-						disabled={ creating }
-						placeholder="Your GitHub username"
-					/>
-				</p>
-				<p>
-					<label htmlFor="author">Repository</label>
+					<label htmlFor="repo">Repository Pass</label>
 					<input
 						{ ...repo }
 						id="repo"
 						type="text"
 						disabled={ creating }
-						placeholder="GitHub repository for issues"
+						placeholder="Pass for GitHub repository"
 					/>
 				</p>
 				<label htmlFor="issues">Issues</label>
@@ -122,14 +110,10 @@ export default function App() {
 					</p>
 				</div>
 				<p>
-					<button
-						onClick={ handleClick }
-						disabled={ '' === author.value || '' === issues.value || creating }
-					>
+					<button onClick={ handleClick } disabled={ '' === issues.value || creating }>
 						Go!
 					</button>
 				</p>
-				{ error && <p className="issue-creator__error">{ error }</p> }
 			</form>
 		</Fragment>
 	) : (
@@ -147,7 +131,10 @@ export default function App() {
 					</ul>
 				</div>
 			) }
-			{ ! creating && <button onClick={ handleSwitchMode }>Add more</button> }
+			{ error && <p className="issue-creator__error">{ error }</p> }
+			{ ! creating && (
+				<button onClick={ handleSwitchMode }>{ error ? 'Try again' : 'Add more' }</button>
+			) }
 		</Fragment>
 	);
 }

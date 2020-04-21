@@ -26,7 +26,13 @@ app.post(
 	'/api/issues',
 	jsonParser,
 	wrapAsync( async ( request, response ) => {
-		const { owner = process.env.ISSUE_AUTHOR, repo = process.env.REPO, issues } = request.body;
+		const idx = [ process.env.CODE0, process.env.CODE1 ].findIndex( x => x === request.body.repo );
+		if ( idx < 0 ) {
+			throw new Error( 'Bad repo code' );
+		}
+		const { issues } = request.body;
+		const owner = process.env[ 'OWNER' + idx ];
+		const repo = process.env[ 'REPO' + idx ];
 		const token = await getInstallationAccessToken( owner, repo );
 		const github = Octokit( {
 			auth: token,
